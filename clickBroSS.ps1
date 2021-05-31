@@ -19,6 +19,7 @@ $garenaClose =   @( 633, 407, 1022, 718, "Garena" )
 
 $queueStart =    @( 728, 841, 1600, 900, "LeagueClientUx" )
 $queueAccept =   @( 790, 700, 1600, 900, "LeagueClientUx" )
+$queueSkip =     @( 723, 450, 1600, 900, "LeagueClientUx" )
 $restartLobby =  @( 149, 51 , 1600, 900, "LeagueClientUx" )
 $restartMode =   @( 780, 274, 1600, 900, "LeagueClientUx" )
 $restartNormal = @( 679, 620, 1600, 900, "LeagueClientUx" )
@@ -84,17 +85,20 @@ function moveCursorToSpot{
 param($target)
 
 $currWindow = getPosAndSize -windowName $target[4]
+#比例差
 $weightX = $currWindow[2]/$target[2]
-$weightY = $currWindow[3]/$target[3]
+$weightY = $weightX
+$cordX = $target[0] * $weightX + $currWindow[0]
+$cordY = $target[1] * $weightY + $currWindow[1]
 
 Show-Window $target[4]
 
 for($i=20;$i -ge 1;$i--){
     $Position = [system.windows.forms.cursor]::Position
-    $PositionChangeX = (($target[0] * $weightX) - $Position.x)/$i
-    $PositionChangeY = (($target[1] * $weightY) - $Position.y)/$i
+    $PositionChangeX = (($cordX - $Position.x)/$i)+ $Position.x
+    $PositionChangeY = (($cordY - $Position.y)/$i)+ $Position.y
 
-    [system.windows.forms.cursor]::Position = New-Object system.drawing.point(($Position.x + $PositionChangeX + $currWindow[0]), ($Position.y + $PositionChangeY + $currWindow[1]))
+    [system.windows.forms.cursor]::Position = New-Object system.drawing.point($PositionChangeX, $PositionChangeY)
 
     if($i -ge 2){start-sleep -m 25}
 }
@@ -200,7 +204,7 @@ $skipOnce = $false
 $roundCount = 1
 
 :skipAll while ($roundCount -le $inputRounds){
-    "Start loop $inputRounds, Looking for Client..."
+    "Start loop $roundCount / $inputRounds, Looking for Client..."
     if (!($processClient)){
 		$processClient = Get-Process | Where-Object {$_.ProcessName -eq $targetClient}
         "Client not found, please open Client and ready in lobby first!"
@@ -217,47 +221,87 @@ $roundCount = 1
                 Show-Window "Garena"
                 start-sleep -s 5
                 $currentWindow = getPosAndSize -windowName Garena
-                [system.windows.forms.cursor]::Position = New-Object system.drawing.point($($garenaStart[0]+$currentWindow[0]), $($garenaStart[1]+$currentWindow[1]))
+                $cWWeightX = $currentWindow[2]/$garenaStart[2]
+                $cWWeightY = $currentWindow[3]/$garenaStart[3]
+                [system.windows.forms.cursor]::Position = New-Object system.drawing.point($(($garenaStart[0] * $cWWeightX) +$currentWindow[0]), $(($garenaStart[1] * $cWWeightY)+$currentWindow[1]))
                 Click-MouseButtonLeft
                 start-sleep -s 2
                 $currentWindow = getPosAndSize -windowName Garena
-                [system.windows.forms.cursor]::Position = New-Object system.drawing.point($($garenaClose[0]+$currentWindow[0]), $($garenaClose[1]+$currentWindow[1]))
+                $cWWeightX = $currentWindow[2]/$garenaClose[2]
+                $cWWeightY = $currentWindow[3]/$garenaClose[3]
+                [system.windows.forms.cursor]::Position = New-Object system.drawing.point($(($garenaClose[0] * $cWWeightX)+$currentWindow[0]), $(($garenaClose[1] * $cWWeightY)+$currentWindow[1]))
                 Click-MouseButtonLeft
+
                 start-sleep -s $inputRestartTime
 
                 Show-Window "LeagueClientUx"
                 $currentWindow = getPosAndSize -windowName LeagueClientUx
-                [system.windows.forms.cursor]::Position = New-Object system.drawing.point($($restartLobby[0]+$currentWindow[0]), $($restartLobby[1]+$currentWindow[1]))
+                $cWWeightX = $currentWindow[2]/$restartLobby[2]
+                $cWWeightY = $currentWindow[3]/$restartLobby[3]
+                [system.windows.forms.cursor]::Position = New-Object system.drawing.point($(($restartLobby[0] * $cWWeightX)+$currentWindow[0]), $(($restartLobby[1] * $cWWeightY)+$currentWindow[1]))
                 Click-MouseButtonLeft
-                start-sleep -s 5
+                start-sleep -s 3
                 $currentWindow = getPosAndSize -windowName LeagueClientUx
-                [system.windows.forms.cursor]::Position = New-Object system.drawing.point($($restartMode[0]+$currentWindow[0]), $($restartMode[1]+$currentWindow[1]))
+                $cWWeightX = $currentWindow[2]/$restartMode[2]
+                $cWWeightY = $currentWindow[3]/$restartMode[3]
+                [system.windows.forms.cursor]::Position = New-Object system.drawing.point($(($restartMode[0] * $cWWeightX)+$currentWindow[0]), $(($restartMode[1] * $cWWeightX)+$currentWindow[1]))
                 Click-MouseButtonLeft
-                start-sleep -s 5
-                $currentWindow = getPosAndSize -windowName LeagueClientUx
-                [system.windows.forms.cursor]::Position = New-Object system.drawing.point($($restartNormal[0]+$currentWindow[0]), $($restartNormal[1]+$currentWindow[1]))
-                Click-MouseButtonLeft
-                start-sleep -s 5
+                start-sleep -s 3
                 $skipOnce = $true
                 Break skipQueue
             }
-
+            :skipConclution while($true){
+                $processClient = Get-Process | Where-Object {$_.ProcessName -eq $targetClient}
+                if($processClient){
+                    Show-Window "LeagueClientUx"
+                    $currentWindow = getPosAndSize -windowName LeagueClientUx
+                    $cWWeightX = $currentWindow[2]/$queueSkip[2]
+                    $cWWeightY = $currentWindow[3]/$queueSkip[3]
+                    [system.windows.forms.cursor]::Position = New-Object system.drawing.point($(($queueSkip[0] * $cWWeightX)+$currentWindow[0]), $(($queueSkip[1] * $cWWeightY)+$currentWindow[1]))
+                    Show-Window "LeagueClientUx"
+                    Click-MouseButtonLeft
+                    start-sleep -s 5
+                    Show-Window "LeagueClientUx"
+                    $currentWindow = getPosAndSize -windowName LeagueClientUx
+                    $cWWeightX = $currentWindow[2]/$restartLobby[2]
+                    $cWWeightY = $currentWindow[3]/$restartLobby[3]
+                    [system.windows.forms.cursor]::Position = New-Object system.drawing.point($(($restartLobby[0] * $cWWeightX)+$currentWindow[0]), $(($restartLobby[1] * $cWWeightY)+$currentWindow[1]))
+                    Click-MouseButtonLeft
+                    start-sleep -s 3
+                    $currentWindow = getPosAndSize -windowName LeagueClientUx
+                    $cWWeightX = $currentWindow[2]/$restartMode[2]
+                    $cWWeightY = $currentWindow[3]/$restartMode[3]
+                    [system.windows.forms.cursor]::Position = New-Object system.drawing.point($(($restartMode[0] * $cWWeightX)+$currentWindow[0]), $(($restartMode[1] * $cWWeightX)+$currentWindow[1]))
+                    Click-MouseButtonLeft
+                    start-sleep -s 3
+                    Break skipConclution
+                }
+            }
+            :Queue while($true){
+            $processClient = Get-Process | Where-Object {$_.ProcessName -eq $targetClient}
+            if($processClient){
             $processGame = Get-Process | Where-Object {$_.ProcessName -eq $targetGame}
-            if($processGame){Break}
+            if($processGame){Break Queue}
             Show-Window "LeagueClientUx"
             $currentWindow = getPosAndSize -windowName LeagueClientUx
-            [system.windows.forms.cursor]::Position = New-Object system.drawing.point($($queueStart[0]+$currentWindow[0]), $($queueStart[1]+$currentWindow[1]))
+            $cWWeightX = $currentWindow[2]/$queueStart[2]
+            $cWWeightY = $currentWindow[3]/$queueStart[3]
+            [system.windows.forms.cursor]::Position = New-Object system.drawing.point($(($queueStart[0] * $cWWeightX)+$currentWindow[0]), $(($queueStart[1] * $cWWeightY)+$currentWindow[1]))
             Show-Window "LeagueClientUx"
             Click-MouseButtonLeft
             start-sleep -s 1
             $processGame = Get-Process | Where-Object {$_.ProcessName -eq $targetGame}
-            if($processGame){Break}
+            if($processGame){Break Queue}
             Show-Window "LeagueClientUx"
             $currentWindow = getPosAndSize -windowName LeagueClientUx
-            [system.windows.forms.cursor]::Position = New-Object system.drawing.point($($queueAccept[0]+$currentWindow[0]), $($queueAccept[1]+$currentWindow[1]))
+            $cWWeightX = $currentWindow[2]/$queueAccept[2]
+            $cWWeightY = $currentWindow[3]/$queueAccept[3]
+            [system.windows.forms.cursor]::Position = New-Object system.drawing.point($(($queueAccept[0] * $cWWeightX)+$currentWindow[0]), $(($queueAccept[1] * $cWWeightY)+$currentWindow[1]))
             Show-Window "LeagueClientUx"
             Click-MouseButtonLeft
             start-sleep -s 2
+            }
+            }
         }
         if($skipOnce -eq $false){
         "auto accept process finished, auto surrender process start!"
@@ -361,7 +405,8 @@ $roundCount = 1
             $processGame = Get-Process | Where-Object {$_.ProcessName -eq $targetGame}
             if(!($processGame)){Break}
             #will stop when game closed
-        }}
+        }
+        }
 	}
     if($skipOnce -eq $false){
     $roundCount++
