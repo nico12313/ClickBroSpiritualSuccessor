@@ -84,7 +84,6 @@ function moveCursorToSpot{
 param($target)
 
 $currWindow = getPosAndSize -windowName $target[4]
-"$currWindow"
 $weightX = $currWindow[2]/$target[2]
 $weightY = $currWindow[3]/$target[3]
 
