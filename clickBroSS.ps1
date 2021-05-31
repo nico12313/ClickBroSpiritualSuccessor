@@ -91,7 +91,10 @@ $weightY = $weightX
 $cordX = $target[0] * $weightX + $currWindow[0]
 $cordY = $target[1] * $weightY + $currWindow[1]
 
-Show-Window $target[4]
+$processGame = Get-Process | Where-Object {$_.ProcessName -eq $targetGame}
+if($processGame){
+    Show-Window $target[4]
+}
 
 for($i=20;$i -ge 1;$i--){
     $Position = [system.windows.forms.cursor]::Position
@@ -191,9 +194,8 @@ $inputTime = Read-Host -Prompt '輸入投降時間(分鐘，不輸入為掛到10
 $inputRounds = Read-Host -Prompt '輸入重複回數(不輸入為掛到上限50次):'
 $inputRestartTime = Read-Host -Prompt '你英雄聯盟客戶端的開啟時間(秒，不輸入即設置為60秒，建議設定較長時間):'
 
-if(($inputTime -eq 0) -or ($inputTime -eq "")){
-$inputTime = 10}else{
-$timeout = new-timespan -Minutes $inputTime}
+if(($inputTime -eq 0) -or ($inputTime -eq "")){$inputTime = 10}
+$timeout = new-timespan -Minutes $inputTime
 if(($inputRounds -gt 50) -or ($inputRounds -eq "")){
 $inputRounds = 50
 "已更改為上限50回"}
